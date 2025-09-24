@@ -1,0 +1,72 @@
+.system-status {
+  background: #333;
+  border-radius: 20px;
+  padding: 20px;
+  color: #ff9900;
+}
+
+.status-header {
+  background: #ff9900;
+  color: #000;
+  padding: 8px 15px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 15px;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: 'Orbitron', monospace;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.status-item {
+  display: grid;
+  grid-template-columns: 1fr 80px 100px 50px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: rgba(255, 153, 0, 0.1);
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.system-name {
+  font-weight: bold;
+  color: #ffaa00;
+}
+
+.system-status-indicator {
+  font-weight: bold;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+.efficiency-bar {
+  height: 8px;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.efficiency-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6600, #ff9900);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.efficiency-text {
+  text-align: right;
+  font-weight: bold;
+  color: #ff9900;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}

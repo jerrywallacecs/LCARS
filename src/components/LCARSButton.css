@@ -1,0 +1,62 @@
+.lcars-button {
+  background: #ff9900;
+  color: #000;
+  padding: 12px 20px;
+  border-radius: 0 20px 20px 0;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  user-select: none;
+  font-family: 'Orbitron', monospace;
+  text-transform: uppercase;
+  border: none;
+  outline: none;
+}
+
+.lcars-button:hover {
+  background: #ffaa00;
+  transform: translateX(2px);
+}
+
+.lcars-button.active {
+  background: #ff6600;
+  box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+}
+
+.lcars-button.orange {
+  background: #ff9900;
+}
+
+.lcars-button.orange:hover {
+  background: #ffaa00;
+}
+
+.lcars-button.blue {
+  background: #6666ff;
+  color: white;
+}
+
+.lcars-button.blue:hover {
+  background: #7777ff;
+}
+
+.lcars-button.red {
+  background: #ff0000;
+  color: white;
+}
+
+.lcars-button.red:hover {
+  background: #cc0000;
+}
+
+.lcars-button.small {
+  padding: 8px 15px;
+  font-size: 10px;
+}
+
+.lcars-button.large {
+  padding: 18px 25px;
+  font-size: 14px;
+}

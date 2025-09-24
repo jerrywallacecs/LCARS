@@ -1,0 +1,67 @@
+.lcars-panel {
+  background: #333;
+  border-radius: 20px;
+  padding: 15px;
+  color: #ff9900;
+  margin: 5px 0;
+}
+
+.panel-header {
+  padding: 8px 15px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  font-family: 'Orbitron', monospace;
+}
+
+.panel-header.orange {
+  background: #ff9900;
+  color: #000;
+}
+
+.panel-header.blue {
+  background: #6666ff;
+  color: white;
+}
+
+.panel-header.red {
+  background: #ff0000;
+  color: white;
+}
+
+.panel-header.green {
+  background: #00ff00;
+  color: #000;
+}
+
+.panel-content {
+  color: #ff9900;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.panel-content h3 {
+  color: #ffaa00;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.panel-content p {
+  margin-bottom: 10px;
+}
+
+.panel-content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.panel-content li {
+  padding: 5px 0;
+  border-bottom: 1px solid #555;
+}
+
+.panel-content li:last-child {
+  border-bottom: none;
+}

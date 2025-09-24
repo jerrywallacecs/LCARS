@@ -15,10 +15,14 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-	"start": "electron .",
+    "electron": "electron .",
+    "electron-dev": "ELECTRON_IS_DEV=true electron .",
+    "electron-dev-win": "set ELECTRON_IS_DEV=true && electron .",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dist": "npm run build && electron ."
   },
   "eslintConfig": {
     "extends": [
