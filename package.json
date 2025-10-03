@@ -12,12 +12,13 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-scripts": "^5.0.1",
+    "systeminformation": "^5.27.10",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "electron": "electron .",
-    "electron-dev": "ELECTRON_IS_DEV=true electron .",
-    "electron-dev-win": "set ELECTRON_IS_DEV=true && electron .",
+    "electron": "npm run build && electron .",
+    "electron-dev": "npm run build && ELECTRON_IS_DEV=true electron .",
+    "electron-dev-win": "npm run build && set ELECTRON_IS_DEV=true && electron .",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

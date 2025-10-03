@@ -1,17 +1,45 @@
 import React from 'react';
-import './LCARSPanel.css';
 
-const LCARSPanel = ({ title, children, className = '', color = 'orange' }) => {
+const LCARSPanel = ({ 
+  title, 
+  children, 
+  className = '', 
+  panelNumber = 3,
+  showCode = true,
+  onClick
+}) => {
+  
+  // Generate panel classes based on panel number
+  const panelClass = `panel-${panelNumber}`;
+  
+  // Create panel with LCARS numbering pattern
+  const renderPanelContent = () => {
+    if (title) {
+      return (
+        <>
+          {String(panelNumber).padStart(2, '0')}
+          <span className="hop">-{title}</span>
+        </>
+      );
+    }
+    return children;
+  };
+
   return (
-    <div className={`lcars-panel ${className}`}>
-      {title && (
-        <div className={`panel-header ${color}`}>
-          {title}
-        </div>
-      )}
-      <div className="panel-content">
-        {children}
-      </div>
+    <div 
+      className={`${panelClass} ${className} ${onClick ? 'clickable' : ''}`}
+      onClick={onClick}
+      style={{
+        cursor: onClick ? 'pointer' : 'default',
+        ...(onClick && {
+          transition: 'all 0.2s ease',
+          ':hover': {
+            filter: 'brightness(1.1)'
+          }
+        })
+      }}
+    >
+      {renderPanelContent()}
     </div>
   );
 };
