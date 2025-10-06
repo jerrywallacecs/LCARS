@@ -238,7 +238,31 @@ function App() {
     }
   };
 
-  
+// provides dynamic network info - currently updates connection status, ip, and dns. we still need default gateway. this still needs more work but it works for now.
+  async function getNetwork() {
+	try {
+		const networkInfo = await window.electronAPI.getNetworkInfo();
+
+		const ip = networkInfo.ipAddresses.map(i => i.address);
+		const ipText = `IP Address: ${ip}`;
+		const ipDiv = document.getElementById('ip');
+		if (ipDiv) ipDiv.textContent = ipText;
+
+		const dns = networkInfo.dns.length ? networkInfo.dns.join(', ') : 'No DNS';
+		const dnsText = `DNS: ${dns}`;
+		const dnsDiv = document.getElementById('dns');
+		if (dnsDiv) dnsDiv.textContent = dnsText;
+		
+		const statusText = networkInfo.ipAddresses.length > 0 ? 'Status: CONNECTED' : 'Status: DISCONNECTED';
+		const statusDiv = document.getElementById('connectionStatus');
+		if (statusDiv) statusDiv.textContent = statusText;
+		
+	} catch (err) {
+		console.error(err);
+	}
+  }
+	
+	getNetwork();
   
   ////////////////////////////////////////////////////////////////////////////////
   /*
@@ -365,10 +389,10 @@ function App() {
               }}>
                 <h3 style={{ margin: '0 0 10px 0' }}>CONNECTION STATUS</h3>
                 <div style={{ fontSize: '14px' }}>
-                  <div>Status: CONNECTED</div>
-                  <div>IP Address: 192.168.1.100</div>
+                  <div id="connectionStatus"></div>
+                  <div id="ip"></div>
                   <div>Gateway: 192.168.1.1</div>
-                  <div>DNS: 8.8.8.8, 8.8.4.4</div>
+                  <div id="dns"></div>
                 </div>
               </div>
               
