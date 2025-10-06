@@ -4,6 +4,7 @@ const os = require('os');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const si = require('systeminformation');
+const dns = require('dns');
 
 let win;
 // Only use dev mode if explicitly set
@@ -496,6 +497,27 @@ function createWindow() {
 		win = null;
 	});
 }
+
+// network info handler - probably better to put this into system info but it works for now
+ipcMain.handle('get-network-info', async () => {
+	const interfaces = os.networkInterfaces();
+	const ipAddresses = [];
+
+	for (const [name, addresses] of Object.entries(interfaces)) {
+		for (const address of addresses) {
+			if (address.family === 'IPv4' && !address.internal) {
+				ipAddresses.push({interface: name, address: address.address });
+			}
+		}
+	}
+
+	const dnsServers = dns.getServers();
+
+	return {
+		ipAddresses,
+		dns: dnsServers
+	}
+});
 
 // IPC handlers for system information
 ipcMain.handle('get-system-info', async () => {
