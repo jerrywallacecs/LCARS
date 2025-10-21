@@ -814,7 +814,7 @@ function App() {
         <div className="wrap">
           <div className="left-frame-top">
             <button className="panel-1-button">LCARS</button>
-            <div className="panel-2">24<span className="hop">-{currentTime.getFullYear()}</span></div>
+            <div className="panel-2">{currentTime.getDate()}<span className="hop">-{currentTime.getFullYear()}</span></div>
           </div>
           <div className="right-frame-top">
             <div className="banner">LCARS &#149; STARDATE {Math.floor((currentTime.getFullYear() - 2000) * 1000 + currentTime.getMonth() * 83 + currentTime.getDate() * 2.7)}.{currentTime.getHours()}</div>
