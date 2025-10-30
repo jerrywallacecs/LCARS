@@ -5,12 +5,17 @@ import LCARSDataCascade from './components/LCARSDataCascade';
 import LCARSNavigation from './components/LCARSNavigation';
 import SystemStatus from './components/SystemStatus';
 import WarpCore from './components/WarpCore';
+import AudioControl from './components/AudioControl';
 
 function App() {
   //default stuf
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentView, setCurrentView] = useState('home');
   const [systemDataPreloaded, setSystemDataPreloaded] = useState(false);
+  
+  // System data state
+  const [systemData, setSystemData] = useState(null);
+  const [systemDataLoading, setSystemDataLoading] = useState(false);
   
   // Terminal state
   const [terminalSessionId, setTerminalSessionId] = useState(null);
@@ -46,21 +51,36 @@ function App() {
   useEffect(() => {
     const preloadSystemData = async () => {
       if (window.electronAPI && !systemDataPreloaded) {
+        setSystemDataLoading(true);
         try {
           console.log('Preloading system data...');
-          await window.electronAPI.getSystemInfo();
+          const startTime = Date.now();
+          const data = await window.electronAPI.getSystemInfo();
+          const endTime = Date.now();
+          console.log(`System data preloaded successfully in ${endTime - startTime}ms`, data);
+          setSystemData(data);
           setSystemDataPreloaded(true);
-          console.log('System data preloaded successfully');
         } catch (error) {
           console.warn('Failed to preload system data:', error);
+          setSystemData(null);
+        } finally {
+          setSystemDataLoading(false);
         }
       }
     };
 
-    //this is a stratigic timer to not interfere with the first preload.#Goated
-    //there's probably a better way to do this but this was the easy quick fix.
-    const preloadTimer = setTimeout(preloadSystemData, 2000);
-    return () => clearTimeout(preloadTimer);
+    // Start preloading immediately when electronAPI is available
+    if (window.electronAPI) {
+      preloadSystemData();
+    } else {
+      // If electronAPI isn't ready yet, try again in 100ms
+      const preloadTimer = setTimeout(() => {
+        if (window.electronAPI) {
+          preloadSystemData();
+        }
+      }, 100);
+      return () => clearTimeout(preloadTimer);
+    }
   }, [systemDataPreloaded]);
 
   // TERMINAL FUNCTIONS
@@ -306,19 +326,22 @@ function App() {
       case 'system':
         return (
           <div>
-            <h1 style={{ color: 'var(--h1-color)' }}>SYSTEM DATA</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
+            {/* <h1 style={{ color: 'var(--h1-color)' }}>SYSTEM DATA</h1> */}
+            <div style={{ display: 'grid', gap: '0.5rem 2rem', paddingTop: '0.3rem' }}>
               <div>
-                <h3 style={{ color: 'var(--h3-color)' }}>System Status</h3>
-                <SystemStatus />
+                <h3 style={{ color: 'var(--h3-color)' }}>System Data</h3>
+                <SystemStatus 
+                  systemData={systemData}
+                  loading={systemDataLoading}
+                />
               </div>
-              <div>
+              {/* <div>
                 <h3 style={{ color: 'var(--h3-color)' }}>Warp Core</h3>
                 <WarpCore />
-              </div>
+              </div> */}
             </div>
-            <div style={{ marginTop: '2rem' }}>
-            </div>
+            {/* <div style={{ marginTop: '2rem' }}>
+            </div> */}
           </div>
         );
       case 'files': 
@@ -588,30 +611,9 @@ function App() {
       case 'audio':
         return (
           <div>
-              <div style={{ 
-                background: 'var(--orange)', 
-                color: 'black', 
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>AUDIO LEVELS</h3>
-                <div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    Master Volume: <span style={{ fontFamily: 'monospace' }}>{'█'.repeat(7)}{'░'.repeat(3)}</span> 70%
-                  </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    Communications: <span style={{ fontFamily: 'monospace' }}>{'█'.repeat(8)}{'░'.repeat(2)}</span> 80%
-                  </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    Alerts: <span style={{ fontFamily: 'monospace' }}>{'█'.repeat(9)}{'░'.repeat(1)}</span> 90%
-                  </div>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    Computer Voice: <span style={{ fontFamily: 'monospace' }}>{'█'.repeat(6)}{'░'.repeat(4)}</span> 60%
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h3 style={{ color: 'var(--h3-color)' }}>Audio Control Systems</h3>
+            <AudioControl />
+          </div>
         );
         {/*
               This is also not done. Same reason as above. Not really sure what we should all include here.
@@ -770,13 +772,45 @@ function App() {
          
             <h2 style={{ color: 'var(--h2-color)' }}>Available Systems</h2>
             <ul style={{ color: 'var(--font-color)' }}>
-              <li>System Data - Real-time system monitoring</li>
+              <li>System Data - Real-time system monitoring {systemDataLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : systemDataPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : ''}</li>
               <li>File Explorer - Browse and manage files</li>
               <li>Network - Network status and connections</li>
               <li>Terminal - Command line interface</li>
               <li>Audio - Audio systems and communications</li>
               <li>Display - Monitor and graphics settings</li>
             </ul>
+            
+            {systemDataLoading && (
+              <div style={{ 
+                marginTop: '2rem', 
+                padding: '1rem', 
+                background: 'rgba(255, 153, 0, 0.1)', 
+                border: '1px solid var(--orange)',
+                borderRadius: '0 10px 0 0',
+                color: 'var(--orange)'
+              }}>
+                <div>🔄 INITIALIZING SYSTEM MONITORING...</div>
+                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                  Collecting hardware information and performance metrics
+                </div>
+              </div>
+            )}
+            
+            {!systemDataLoading && systemDataPreloaded && systemData && (
+              <div style={{ 
+                marginTop: '2rem', 
+                padding: '1rem', 
+                background: 'rgba(0, 255, 0, 0.1)', 
+                border: '1px solid var(--green)',
+                borderRadius: '0 10px 0 0',
+                color: 'var(--green)'
+              }}>
+                <div>✅ SYSTEM MONITORING READY</div>
+                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                  Hardware data preloaded - click "SYS DATA" for instant access
+                </div>
+              </div>
+            )}
           </div>
         );
       default:

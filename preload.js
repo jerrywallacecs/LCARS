@@ -15,5 +15,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTerminalOutput: (callback) => ipcRenderer.on('terminal-output', callback),
   removeTerminalOutputListener: (callback) => ipcRenderer.removeListener('terminal-output', callback),
   
+  // Audio APIs
+  getAudioInfo: () => ipcRenderer.invoke('get-audio-info'),
+  setMasterVolume: (volume) => ipcRenderer.invoke('set-master-volume', volume),
+  setDeviceVolume: (deviceName, volume) => ipcRenderer.invoke('set-device-volume', deviceName, volume),
+  toggleDeviceMute: (deviceName) => ipcRenderer.invoke('toggle-device-mute', deviceName),
+  
   isElectron: true
 });
