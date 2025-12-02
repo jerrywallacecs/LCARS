@@ -6,6 +6,7 @@ import LCARSNavigation from './components/LCARSNavigation';
 import SystemStatus from './components/SystemStatus';
 import WarpCore from './components/WarpCore';
 import AudioControl from './components/AudioControl';
+import FileExplorer from './components/FileExplorer';
 
 function App() {
   //default stuf
@@ -347,54 +348,15 @@ function App() {
       case 'files': 
         return (
           <div>
-            <h1 style={{ color: 'var(--h1-color)' }}>FILE EXPLORER</h1>
             <div style={{ 
-              background: 'var(--space-white)', 
+              background: '#1a1a1a', 
               color: 'black', 
-              padding: '1rem',
+              padding: '0.5rem',
               borderRadius: 'var(--radius-content-top)',
-              marginTop: '1rem'
+              marginTop: '1rem',
+              height: '70vh'
             }}>
-              <div style={{ display: 'flex', marginBottom: '1rem' }}>
-                <div style={{ 
-                  background: 'var(--orange)', 
-                  color: 'black', 
-                  padding: '0.5rem 1rem',
-                  marginRight: '0.5rem',
-                  fontWeight: 'bold'
-                }}>
-                  C:\
-                </div>
-                <div style={{ 
-                  background: 'var(--bluey)', 
-                  color: 'black', 
-                  padding: '0.5rem 1rem',
-                  marginRight: '0.5rem',
-                  fontWeight: 'bold'
-                }}>
-                  Users
-                </div>
-                <div style={{ 
-                  background: 'var(--african-violet)', 
-                  color: 'black', 
-                  padding: '0.5rem 1rem',
-                  fontWeight: 'bold'
-                }}>
-                  Documents
-                </div>
-              </div>
-              <div style={{ fontSize: '14px' }}>
-                {['📁 Desktop', '📁 Downloads', '📁 Pictures', '📁 Videos', '📄 Document.txt', '📄 Report.pdf', '📁 Projects'].map((item, index) => (
-                  <div key={index} style={{ 
-                    padding: '0.5rem', 
-                    borderBottom: '1px solid #ccc',
-                    cursor: 'pointer',
-                    ':hover': { background: '#f0f0f0' }
-                  }}>
-                    {item}
-                  </div>
-                ))}
-              </div>
+              <FileExplorer />
             </div>
           </div>
         );

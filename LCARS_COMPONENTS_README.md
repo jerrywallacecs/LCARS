@@ -1,9 +1,3 @@
-# LCARS Interface - Using Official LCARS Library
-
-This project has been updated to use the official LCARS library (version 24.2) instead of custom CSS. All components have been recreated to leverage the authentic LCARS styling and functionality.
-
-## Components Created
-
 ### 1. LCARSButton
 A button component that can render in different LCARS styles:
 

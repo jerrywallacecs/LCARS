@@ -13,17 +13,17 @@ const SystemStatus = ({ className = '', systemData: propSystemData = null, loadi
   const pages = [
     {
       title: 'CORE SYSTEMS',
-      icon: '🖥️',
+      icon: '',
       description: 'CPU, Memory & Performance'
     },
     {
       title: 'STORAGE & GRAPHICS',
-      icon: '💾',
+      icon: '',
       description: 'Disk Usage & GPU Information'
     },
     {
       title: 'SYSTEM INFORMATION',
-      icon: '⚙️',
+      icon: '',
       description: 'Platform & Hardware Details'
     }
   ];
