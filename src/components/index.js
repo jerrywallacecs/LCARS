@@ -6,8 +6,9 @@ export { default as LCARSDataCascade } from './LCARSDataCascade';
 export { default as LCARSNavigation } from './LCARSNavigation';
 export { default as LCARSExamples } from './LCARSExamples';
 export { default as SystemStatus } from './SystemStatus';
+export { default as NetworkStatus } from './NetworkStatus';
 export { default as WarpCore } from './WarpCore';
 export { default as FileExplorer } from './FileExplorer';
 
 // Usage:
-// import { LCARSButton, LCARSPanel, SystemStatus, FileExplorer } from './components';
+// import { LCARSButton, LCARSPanel, SystemStatus, NetworkStatus, FileExplorer } from './components';

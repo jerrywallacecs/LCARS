@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSystemInfoLight: () => ipcRenderer.invoke('get-system-info-light'),
   getGPUPerformance: () => ipcRenderer.invoke('get-gpu-performance'),
   getNetworkInfo: () => ipcRenderer.invoke('get-network-info'),
+  getWifiNetworks: () => ipcRenderer.invoke('get-wifi-networks'),
+  checkInternetConnectivity: () => ipcRenderer.invoke('check-internet-connectivity'),
   exitApp: () => ipcRenderer.invoke('exit-app'),
   
   // Terminal APIs

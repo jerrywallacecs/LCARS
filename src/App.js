@@ -4,9 +4,11 @@ import LCARSPanel from './components/LCARSPanel';
 import LCARSDataCascade from './components/LCARSDataCascade';
 import LCARSNavigation from './components/LCARSNavigation';
 import SystemStatus from './components/SystemStatus';
+import NetworkStatus from './components/NetworkStatus';
 import WarpCore from './components/WarpCore';
 import AudioControl from './components/AudioControl';
 import FileExplorer from './components/FileExplorer';
+import NetworkAlert from './components/NetworkAlert';
 
 function App() {
   //default stuf
@@ -29,6 +31,24 @@ function App() {
   const [gpuData, setGpuData] = useState(null);
   const [gpuLoading, setGpuLoading] = useState(false);
   const [gpuDataPreloaded, setGpuDataPreloaded] = useState(false);
+  
+  // File Explorer state
+  const [fileExplorerPreloaded, setFileExplorerPreloaded] = useState(false);
+  const [fileExplorerLoading, setFileExplorerLoading] = useState(false);
+  
+  // Network state
+  const [networkDataPreloaded, setNetworkDataPreloaded] = useState(false);
+  const [networkLoading, setNetworkLoading] = useState(false);
+  
+  // Terminal state
+  const [terminalPreloaded, setTerminalPreloaded] = useState(false);
+  
+  // Audio state
+  const [audioPreloaded, setAudioPreloaded] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
+  
+  // Simple network state for warning only
+  const [isConnectedToInternet, setIsConnectedToInternet] = useState(true);
   
   // auto scroll ref
   const terminalRef = useRef(null);
@@ -83,6 +103,98 @@ function App() {
       return () => clearTimeout(preloadTimer);
     }
   }, [systemDataPreloaded]);
+
+  // Preload all component data at startup
+  useEffect(() => {
+    const preloadAllComponents = async () => {
+      if (!window.electronAPI) return;
+
+      // Preload GPU data
+      if (!gpuDataPreloaded) {
+        setGpuLoading(true);
+        try {
+          console.log('Preloading GPU data...');
+          const data = await window.electronAPI.getGPUPerformance();
+          setGpuData(data);
+          setGpuDataPreloaded(true);
+          console.log('GPU data preloaded successfully');
+        } catch (error) {
+          console.warn('Failed to preload GPU data:', error);
+        } finally {
+          setGpuLoading(false);
+        }
+      }
+
+      // Preload network data
+      if (!networkDataPreloaded) {
+        setNetworkLoading(true);
+        try {
+          console.log('Preloading network data...');
+          await getNetwork(); // This already sets network status
+          setNetworkDataPreloaded(true);
+          console.log('Network data preloaded successfully');
+        } catch (error) {
+          console.warn('Failed to preload network data:', error);
+        } finally {
+          setNetworkLoading(false);
+        }
+      }
+
+      // Preload terminal capability
+      if (!terminalPreloaded) {
+        try {
+          console.log('Checking terminal capability...');
+          // Just check if terminal API is available
+          if (window.electronAPI.createTerminalSession) {
+            setTerminalPreloaded(true);
+            console.log('Terminal capability confirmed');
+          }
+        } catch (error) {
+          console.warn('Terminal not available:', error);
+        }
+      }
+
+      // Preload file explorer capability
+      if (!fileExplorerPreloaded) {
+        setFileExplorerLoading(true);
+        try {
+          console.log('Checking file explorer capability...');
+          // Simulate file explorer check - you could add an actual API check here
+          setTimeout(() => {
+            setFileExplorerPreloaded(true);
+            setFileExplorerLoading(false);
+            console.log('File explorer capability confirmed');
+          }, 500);
+        } catch (error) {
+          console.warn('File explorer not available:', error);
+          setFileExplorerLoading(false);
+        }
+      }
+
+      // Preload audio capability
+      if (!audioPreloaded) {
+        setAudioLoading(true);
+        try {
+          console.log('Checking audio capability...');
+          // Check if audio elements exist
+          const audioElement = document.getElementById('audio2');
+          if (audioElement) {
+            setAudioPreloaded(true);
+            console.log('Audio capability confirmed');
+          }
+        } catch (error) {
+          console.warn('Audio not available:', error);
+        } finally {
+          setAudioLoading(false);
+        }
+      }
+    };
+
+    // Start preloading after system data is done
+    if (systemDataPreloaded && window.electronAPI) {
+      setTimeout(preloadAllComponents, 100);
+    }
+  }, [systemDataPreloaded, gpuDataPreloaded, networkDataPreloaded, terminalPreloaded, fileExplorerPreloaded, audioPreloaded]);
 
   // TERMINAL FUNCTIONS
   const initializeTerminal = useCallback(async () => {
@@ -202,32 +314,6 @@ function App() {
     }
   }, [currentView, terminalSessionId, terminalLoading, initializeTerminal]);
 
-  // Fetch GPU data when display view is accessed
-  useEffect(() => {
-    const preloadGPUData = async () => {
-      if (window.electronAPI && !gpuDataPreloaded) {
-        setGpuLoading(true);
-        try {
-          console.log('Fetching GPU performance data...');
-          const data = await window.electronAPI.getGPUPerformance();
-          setGpuData(data);
-          setGpuDataPreloaded(true);
-          console.log('GPU data fetched:', data);
-        } catch (error) {
-          console.error('Failed to fetch GPU data:', error);
-        } finally {
-          setGpuLoading(false);
-        }
-      }
-    };
-
-    if (currentView === 'display') {
-      // Add a delay before fetching GPU data to prevent freezing
-      const gpuTimer = setTimeout(preloadGPUData, 1500);
-      return () => clearTimeout(gpuTimer);
-    }
-  }, [currentView, gpuDataPreloaded]);
-
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', { 
       hour12: false,
@@ -264,8 +350,21 @@ function App() {
 	try {
 		const networkInfo = await window.electronAPI.getNetworkInfo();
 
-		const ip = networkInfo.ipAddresses.map(i => i.address);
-		const ipText = `IP Address: ${ip}`;
+		// Filter out virtual IPs. Giving me problems when trying to test the error screen. Found all this on stack overflow so gave it a whirl
+		const realIPs = networkInfo.ipAddresses.filter(ip => {
+			const addr = ip.address;
+			return !addr.startsWith('127.') &&           // Loopback
+				   !addr.startsWith('169.254.') &&       // APIPA
+				   !addr.startsWith('192.168.229.') &&   // VMware virtual adapters
+				   !addr.startsWith('192.168.188.') &&   // VirtualBox/other virtual adapters
+				   !addr.startsWith('10.0.75.') &&       // Hyper-V virtual adapters
+				   !addr.startsWith('172.16.') &&        // Docker/container networks (partial range)
+				   addr !== '::1' &&                     // IPv6 loopback
+				   !addr.startsWith('fe80:');            // IPv6 link-local
+		});
+
+		const ip = realIPs.length > 0 ? realIPs.map(i => i.address) : ['No Real Network'];
+		const ipText = `IP Address: ${ip.join(', ')}`;
 		const ipDiv = document.getElementById('ip');
 		if (ipDiv) ipDiv.textContent = ipText;
 
@@ -274,12 +373,23 @@ function App() {
 		const dnsDiv = document.getElementById('dns');
 		if (dnsDiv) dnsDiv.textContent = dnsText;
 		
-		const statusText = networkInfo.ipAddresses.length > 0 ? 'Status: CONNECTED' : 'Status: DISCONNECTED';
+		// Check for real network connectivity using filtered IPs
+		const hasRealIP = realIPs.length > 0 && realIPs.some(ip => 
+			ip.address !== 'No Real Network'
+		);
+		const hasRealDNS = dns !== 'DISCONNECTED' && dns !== 'No DNS';
+		
+		const isConnected = hasRealIP && hasRealDNS;
+		const statusText = isConnected ? 'Status: CONNECTED' : 'Status: DISCONNECTED';
 		const statusDiv = document.getElementById('connectionStatus');
 		if (statusDiv) statusDiv.textContent = statusText;
 		
+		// Update state for warning
+		setIsConnectedToInternet(isConnected);
+		
 	} catch (err) {
 		console.error(err);
+		setIsConnectedToInternet(false);
 	}
   }
 	
@@ -326,11 +436,9 @@ function App() {
     switch(currentView) {
       case 'system':
         return (
-          <div>
-            {/* <h1 style={{ color: 'var(--h1-color)' }}>SYSTEM DATA</h1> */}
-            <div style={{ display: 'grid', gap: '0.5rem 2rem', paddingTop: '0.3rem' }}>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
+            <div style={{ display: 'grid', gap: '0.5rem 2rem', paddingTop: '0.3rem', overflow: 'hidden', height: '100%' }}>
               <div>
-                <h3 style={{ color: 'var(--h3-color)' }}>System Data</h3>
                 <SystemStatus 
                   systemData={systemData}
                   loading={systemDataLoading}
@@ -347,14 +455,15 @@ function App() {
         );
       case 'files': 
         return (
-          <div>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
             <div style={{ 
               background: '#1a1a1a', 
               color: 'black', 
               padding: '0.5rem',
               borderRadius: 'var(--radius-content-top)',
               marginTop: '1rem',
-              height: '70vh'
+              height: '70vh',
+              overflow: 'hidden'
             }}>
               <FileExplorer />
             </div>
@@ -362,60 +471,13 @@ function App() {
         );
       case 'network':
         return (
-          <div>
-            <h1 style={{ color: 'var(--h1-color)' }}>NETWORK STATUS</h1>
-            <div style={{ marginTop: '2rem' }}>
-              <div style={{ 
-                background: 'var(--orange)', 
-                color: 'black', 
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>CONNECTION STATUS</h3>
-                <div style={{ fontSize: '14px' }}>
-                  <div id="connectionStatus"></div>
-                  <div id="ip"></div>
-                  <div>Gateway: 192.168.1.1</div>
-                  <div id="dns"></div>
-                </div>
-              </div>
-              
-              <div style={{ 
-                background: 'var(--bluey)', 
-                color: 'black', 
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>NETWORK TRAFFIC</h3>
-                <div style={{ fontSize: '14px' }}>
-                  <div>Download: {(Math.random() * 100).toFixed(1)} Mbps</div>
-                  <div>Upload: {(Math.random() * 50).toFixed(1)} Mbps</div>
-                  <div>Packets Sent: {Math.floor(Math.random() * 10000)}</div>
-                  <div>Packets Received: {Math.floor(Math.random() * 15000)}</div>
-                </div>
-              </div>
-
-              <div style={{ 
-                background: 'var(--red)', 
-                color: 'black', 
-                padding: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>ACTIVE CONNECTIONS</h3>
-                <div style={{ fontSize: '12px', fontFamily: 'monospace' }}>
-                  <div>tcp 192.168.1.100:443 → github.com:443 ESTABLISHED</div>
-                  <div>tcp 192.168.1.100:3000 → localhost:3000 LISTENING</div>
-                  <div>udp 192.168.1.100:53 → 8.8.8.8:53 ACTIVE</div>
-                </div>
-              </div>
-            </div>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
+            <NetworkStatus />
           </div>
         );
       case 'terminal':
         return (
-          <div>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
             <div 
               ref={terminalRef}
               style={{ 
@@ -572,8 +634,7 @@ function App() {
            */}
       case 'audio':
         return (
-          <div>
-            <h3 style={{ color: 'var(--h3-color)' }}>Audio Control Systems</h3>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
             <AudioControl />
           </div>
         );
@@ -582,28 +643,15 @@ function App() {
           */}
       case 'display': // uh it works now. I think we should test mor
         return (
-          <div>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
             <div style={{ 
               marginTop: '2rem',
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '2rem'
+              gap: '2rem',
+              overflow: 'hidden',
+              height: '100%'
             }}>
-              <div style={{ 
-          background: 'var(--bluey)', 
-          color: 'black', 
-          padding: '1rem',
-          marginBottom: '1rem',
-          borderRadius: '0 20px 0 0'
-              }}>
-          <h3 style={{ margin: '0 0 10px 0' }}>MONITOR CONFIGURATION</h3>
-          <div style={{ fontSize: '14px' }}>
-            <div>Primary Display: 1920x1080 @ 60Hz</div>
-            <div>Secondary Display: 2560x1440 @ 144Hz</div>
-            <div>Color Depth: 32-bit</div>
-            <div>Refresh Rate: Variable</div>
-          </div>
-              </div>
 
               <div style={{ 
           background: 'var(--red)', 
@@ -663,70 +711,11 @@ function App() {
             </div>
           </div>
         );
-        {/* Do we really want this? I thot we could just get the weather info from the users pc but turns out that is not really reliably possilbe. 
-            We would unfortunately need an api key and service. There are free ones out there such as open-meteo but they are not super reliable.
-            I added some dummy data to show what it could look like. We can remove this if the team decides against it. 
-            #EMOJIS*/}
-      case 'weather':
-        return (
-          <div>
-            <h1 style={{ color: 'var(--h1-color)' }}>WEATHER SYSTEMS</h1>
-            <div style={{ marginTop: '2rem' }}>
-              <div style={{ 
-                background: 'var(--orange)', 
-                color: 'black', 
-                padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>CURRENT CONDITIONS</h3>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem' }}>
-                  🌤️ Partly Cloudy - 22°C
-                </div>
-                <div style={{ fontSize: '14px' }}>
-                  <div>Humidity: 65%</div>
-                  <div>Wind: 15 km/h NW</div>
-                  <div>Pressure: 1013 hPa</div>
-                  <div>Visibility: 10 km</div>
-                </div>
-              </div>
-
-              <div style={{ 
-                background: 'var(--african-violet)', 
-                color: 'black', 
-                padding: '1rem',
-                borderRadius: '0 20px 0 0'
-              }}>
-                <h3 style={{ margin: '0 0 10px 0' }}>5-DAY FORECAST</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
-                  {[
-                    { day: 'Today', icon: '🌤️', temp: '22°' },
-                    { day: 'Tomorrow', icon: '☀️', temp: '25°' },
-                    { day: 'Friday', icon: '🌧️', temp: '18°' },
-                    { day: 'Saturday', icon: '⛈️', temp: '16°' },
-                    { day: 'Sunday', icon: '🌈', temp: '20°' }
-                  ].map((forecast, index) => (
-                    <div key={index} style={{ 
-                      background: 'var(--space-white)', 
-                      padding: '0.5rem', 
-                      textAlign: 'center',
-                      fontSize: '12px'
-                    }}>
-                      <div style={{ fontWeight: 'bold' }}>{forecast.day}</div>
-                      <div style={{ fontSize: '20px', margin: '0.5rem 0' }}>{forecast.icon}</div>
-                      <div>{forecast.temp}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       // THIS IS THE main page view. Defaults currently, buuut I want to add a button to get here. Would be easy just dk where to put it.
               // Note that this is were we set the current views and allat as I mentioned at the top of this switch statement.
         case 'home':
         return (
-          <div>
+          <div style={{ overflow: 'hidden', height: '100%' }}>
             <h1 style={{ color: 'var(--h1-color)' }}>WinLCARS INTERFACE</h1>
             <p style={{ color: 'var(--font-color)' }}>
               Library Computer Access/Retrieval System. Select a system from the left navigation panel.
@@ -734,50 +723,18 @@ function App() {
          
             <h2 style={{ color: 'var(--h2-color)' }}>Available Systems</h2>
             <ul style={{ color: 'var(--font-color)' }}>
-              <li>System Data - Real-time system monitoring {systemDataLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : systemDataPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : ''}</li>
-              <li>File Explorer - Browse and manage files</li>
-              <li>Network - Network status and connections</li>
-              <li>Terminal - Command line interface</li>
-              <li>Audio - Audio systems and communications</li>
-              <li>Display - Monitor and graphics settings</li>
+              <li>System Data - Real-time system monitoring {systemDataLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : systemDataPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
+              <li>File Explorer - Browse and manage files {fileExplorerLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : fileExplorerPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
+              <li>Network - Network status and connections {networkLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : networkDataPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
+              <li>Terminal - Command line interface {terminalPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
+              <li>Audio - Audio systems and communications {audioLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : audioPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
+              <li>Display - Monitor and graphics settings {gpuLoading ? <span style={{ color: 'var(--orange)' }}>(Loading...)</span> : gpuDataPreloaded ? <span style={{ color: 'var(--green)' }}>✓ Ready</span> : <span style={{ color: 'var(--red)' }}>⚠ Offline</span>}</li>
             </ul>
-            
-            {systemDataLoading && (
-              <div style={{ 
-                marginTop: '2rem', 
-                padding: '1rem', 
-                background: 'rgba(255, 153, 0, 0.1)', 
-                border: '1px solid var(--orange)',
-                borderRadius: '0 10px 0 0',
-                color: 'var(--orange)'
-              }}>
-                <div>🔄 INITIALIZING SYSTEM MONITORING...</div>
-                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                  Collecting hardware information and performance metrics
-                </div>
-              </div>
-            )}
-            
-            {!systemDataLoading && systemDataPreloaded && systemData && (
-              <div style={{ 
-                marginTop: '2rem', 
-                padding: '1rem', 
-                background: 'rgba(0, 255, 0, 0.1)', 
-                border: '1px solid var(--green)',
-                borderRadius: '0 10px 0 0',
-                color: 'var(--green)'
-              }}>
-                <div>✅ SYSTEM MONITORING READY</div>
-                <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-                  Hardware data preloaded - click "SYS DATA" for instant access
-                </div>
-              </div>
-            )}
           </div>
         );
       default:
         return (
-          <div style={{ marginTop: 0 }}>
+          <div style={{ marginTop: 0, overflow: 'hidden', height: '100%' }}>
             <h1 style={{ color: 'var(--h1-color)', marginTop: 0 }}>WinLCARS INTERFACE</h1>
             <p style={{ color: 'var(--font-color)' }}>
               Library Computer Access/Retrieval System. Select a system from the left navigation panel.
@@ -790,6 +747,12 @@ function App() {
   return (
     <div>
       <style>{`
+        body, html, #root {
+          overflow: hidden !important;
+          height: 100vh;
+          margin: 0;
+          padding: 0;
+        }
         @keyframes blink {
           0%, 50% { opacity: 1; }
           51%, 100% { opacity: 0; }
@@ -855,11 +818,16 @@ function App() {
             <div className="bar-10"></div>
           </div>
           
-          <div className="content-area">
+          <div className="content-area" style={{ overflow: 'hidden', height: '100vh', maxHeight: '100vh' }}>
             {renderMainContent()}
           </div>
         </div>
       </div>
+      
+      <NetworkAlert 
+        isDisconnected={!isConnectedToInternet} 
+        onClose={() => {}} // should auto hide when reconnected
+      />
     </div>
   );
 }
