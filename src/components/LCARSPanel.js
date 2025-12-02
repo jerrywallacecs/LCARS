@@ -9,6 +9,18 @@ const LCARSPanel = ({
   onClick
 }) => {
   
+  // Handle click with sound effect
+  const handleClick = () => {
+    if (onClick) {
+      // Play LCARS sound effect using the same audio element as LCARSNavigation
+      const audio = document.getElementById('audio2');
+      if (audio) {
+        audio.play();
+      }
+      onClick();
+    }
+  };
+
   // Generate panel classes based on panel number
   const panelClass = `panel-${panelNumber}`;
   
@@ -28,7 +40,7 @@ const LCARSPanel = ({
   return (
     <div 
       className={`${panelClass} ${className} ${onClick ? 'clickable' : ''}`}
-      onClick={onClick}
+      onClick={handleClick}
       style={{
         cursor: onClick ? 'pointer' : 'default',
         ...(onClick && {

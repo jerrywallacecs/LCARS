@@ -23,47 +23,7 @@ const SystemMonitor = () => {
           
           setSystemData(data);
         } else {
-          // Fallback mock data for browser
-          const mockData = {
-            cpu: { 
-              usage: Math.random() * 100, 
-              brand: 'Intel Core i7-12700K', 
-              speed: '3.6 GHz', 
-              cores: 12,
-              temperature: 45 + Math.random() * 20
-            },
-            memory: { 
-              total: 32 * 1024 * 1024 * 1024, // 32GB
-              used: (16 + Math.random() * 8) * 1024 * 1024 * 1024,
-              free: 0,
-              percentage: 0
-            },
-            storage: { 
-              total: 2 * 1024 * 1024 * 1024 * 1024, // 2TB
-              used: 1.2 * 1024 * 1024 * 1024 * 1024,
-              free: 0,
-              percentage: 0
-            },
-            computer: { 
-              hostname: 'LCARS-WORKSTATION', 
-              platform: 'Windows 11', 
-              arch: 'x64',
-              uptime: Date.now() - (Math.random() * 86400000 * 7) // Random uptime up to 7 days
-            },
-            network: { 
-              rx: Math.random() * 1000000, 
-              tx: Math.random() * 500000 
-            }
-          };
-
-          // Calculate derived values
-          mockData.memory.free = mockData.memory.total - mockData.memory.used;
-          mockData.memory.percentage = (mockData.memory.used / mockData.memory.total) * 100;
           
-          mockData.storage.free = mockData.storage.total - mockData.storage.used;
-          mockData.storage.percentage = (mockData.storage.used / mockData.storage.total) * 100;
-
-          setSystemData(mockData);
         }
       } catch (error) {
         console.error('Error getting system info:', error);

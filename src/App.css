@@ -11,7 +11,7 @@ body {
   color: black !important;
   border-radius: var(--radius-content-top, 0 0 0 60px) !important;
   min-height: 400px;
-  padding: 2rem;
+  padding: 0.5rem;
   max-height: calc(100vh - 200px);
   overflow-y: auto;
 }
@@ -26,6 +26,6 @@ body {
 /* Additional responsive adjustments if needed */
 @media (max-width: 768px) {
   .content-area {
-    padding: 1rem;
+    padding: 0.25rem;
   }
 }

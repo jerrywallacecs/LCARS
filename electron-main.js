@@ -617,7 +617,7 @@ function createWindow() {
 	});
 }
 
-// network info handler - probably better to put this into system info but it works for now
+// network info handler - simple and lightweight
 ipcMain.handle('get-network-info', async () => {
 	const interfaces = os.networkInterfaces();
 	const ipAddresses = [];
@@ -634,8 +634,162 @@ ipcMain.handle('get-network-info', async () => {
 
 	return {
 		ipAddresses,
-		dns: dnsServers
+		dns: dnsServers,
+		networkInterfaces: interfaces
 	}
+});
+
+// Internet connectivity check handler
+ipcMain.handle('check-internet-connectivity', async () => {
+	const { spawn } = require('child_process');
+	
+	return new Promise((resolve) => {
+		// Use PowerShell to ping reliable servers
+		const powershell = spawn('powershell.exe', [
+			'-NoProfile', 
+			'-ExecutionPolicy', 'Bypass',
+			'-Command',
+			`
+			$pingResults = @()
+			$servers = @('8.8.8.8', '1.1.1.1', 'google.com')
+			
+			foreach ($server in $servers) {
+				try {
+					$ping = Test-Connection -ComputerName $server -Count 1 -Quiet -TimeoutSeconds 3
+					if ($ping) {
+						$pingResults += $true
+						break
+					}
+				} catch {
+					continue
+				}
+			}
+			
+			if ($pingResults.Count -gt 0) {
+				Write-Output "true"
+			} else {
+				Write-Output "false"
+			}
+			`
+		]);
+
+		let output = '';
+
+		powershell.stdout.on('data', (data) => {
+			output += data.toString().trim();
+		});
+
+		powershell.on('close', (code) => {
+			const isConnected = output.toLowerCase().includes('true');
+			resolve(isConnected);
+		});
+
+		// Fallback timeout
+		setTimeout(() => {
+			powershell.kill();
+			resolve(false);
+		}, 10000);
+	});
+});
+
+// WiFi networks scanner handler
+ipcMain.handle('get-wifi-networks', async () => {
+	const { spawn } = require('child_process');
+	
+	return new Promise((resolve) => {
+		const powershell = spawn('powershell.exe', [
+			'-NoProfile', 
+			'-ExecutionPolicy', 'Bypass',
+			'-Command',
+			`
+			try {
+				$output = netsh wlan show networks
+				$networks = @()
+				$currentNetwork = $null
+				
+				foreach ($line in $output) {
+					if ($line -match "SSID \\d+ : (.+)") {
+						# Save previous network if exists
+						if ($currentNetwork) {
+							$networks += $currentNetwork
+						}
+						# Start new network
+						$ssid = $matches[1].Trim()
+						if ($ssid -ne "" -and $ssid -ne "<Hidden>") {
+							$currentNetwork = @{
+								ssid = $ssid
+								signal = 75
+								security = "Secured"
+								connected = $false
+							}
+						} else {
+							$currentNetwork = $null
+						}
+					}
+					elseif ($line -match "Authentication\\s*:\\s*(.+)" -and $currentNetwork) {
+						$auth = $matches[1].Trim()
+						if ($auth -eq "Open") {
+							$currentNetwork.security = "Open"
+						} else {
+							$currentNetwork.security = "Secured"
+						}
+					}
+				}
+				
+				# Add the last network if exists
+				if ($currentNetwork) {
+					$networks += $currentNetwork
+				}
+				
+				if ($networks.Count -eq 0) {
+					Write-Output "[]"
+				} else {
+					$networks | ConvertTo-Json -Depth 2
+				}
+			} catch {
+				Write-Output "[]"
+			}
+			`
+		]);
+
+		let output = '';
+		let errorOutput = '';
+
+		powershell.stdout.on('data', (data) => {
+			output += data.toString();
+		});
+
+		powershell.stderr.on('data', (data) => {
+			errorOutput += data.toString();
+		});
+
+		powershell.on('close', (code) => {
+			console.log('WiFi networks (show networks) output:', output);
+			console.log('WiFi scan errors:', errorOutput);
+			
+			try {
+				if (output.trim() && output.trim() !== "[]") {
+					const networks = JSON.parse(output.trim());
+					const result = Array.isArray(networks) ? networks : [networks];
+					console.log('Found WiFi networks:', result);
+					resolve(result);
+				} else {
+					console.warn('No WiFi networks found');
+					resolve([]);
+				}
+			} catch (error) {
+				console.error('Error parsing WiFi data:', error);
+				console.error('Raw output:', output);
+				resolve([]);
+			}
+		});
+
+		setTimeout(() => {
+			console.warn('WiFi scan timeout');
+			powershell.kill();
+			resolve([]);
+		}, 10000);
+	});
 });
 
 // IPC handlers for system information
