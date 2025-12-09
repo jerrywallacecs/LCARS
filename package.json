@@ -1,6 +1,8 @@
 {
   "name": "lcars_interface",
   "version": "0.1.0",
+  "description": "WinLCARS Interface - Library Computer Access/Retrieval System for Windows",
+  "author": "TealInc",
   "private": true,
   "main": "electron-main.js",
   "homepage": "./",
@@ -12,6 +14,7 @@
     "chromedriver": "^142.0.0",
     "default-gateway": "^7.2.2",
     "dns": "^0.2.2",
+    "electron-squirrel-startup": "^1.0.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-scripts": "^5.0.1",
@@ -22,11 +25,13 @@
     "electron": "npm run build && electron .",
     "electron-dev": "npm run build && ELECTRON_IS_DEV=true electron .",
     "electron-dev-win": "npm run build && set ELECTRON_IS_DEV=true && electron .",
-    "start": "react-scripts start",
+    "start": "electron-forge start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dist": "npm run build && electron ."
+    "dist": "npm run build && electron .",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "eslintConfig": {
     "extends": [
@@ -47,8 +52,16 @@
     ]
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron/fuses": "^1.8.0",
     "electron": "^38.0.0",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1"
+    "electron-is-dev": "^3.0.1",
+    "electron-wix-msi": "^5.1.3"
   }
 }

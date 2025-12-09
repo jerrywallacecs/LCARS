@@ -6,6 +6,11 @@ const { spawn } = require('child_process');
 const si = require('systeminformation');
 const dns = require('dns');
 
+// Handle Squirrel events on Windows
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
+
 let win;
 // Only use dev mode if explicitly set
 const isDev = process.env.ELECTRON_IS_DEV === 'true';
@@ -579,7 +584,7 @@ function createWindow() {
 		// In development, load from the React dev server
 		console.log('Loading from development server...');
 		win.loadURL('http://localhost:3000');
-		win.webContents.openDevTools();
+		// win.webContents.openDevTools(); // Dev tools removed 
 	} else {
 		// In production, load from the built files
 		const indexPath = path.join(__dirname, 'build', 'index.html');
@@ -587,7 +592,7 @@ function createWindow() {
 		win.loadFile(indexPath);
 		
 		// Enable dev tools for debugging
-		win.webContents.openDevTools();
+		// win.webContents.openDevTools();
 	}
 
 	win.once('ready-to-show', () => {

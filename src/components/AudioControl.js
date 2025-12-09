@@ -231,10 +231,10 @@ const AudioControl = ({ className = '' }) => {
     <div className={className} style={{ color: 'var(--font-color)' }}>
       <style>{`
         .audio-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
           gap: 1.5rem;
           margin-top: 1rem;
+          height: calc(100vh - 200px);
         }
         .audio-panel {
           background: rgba(0, 0, 0, 0.3);
@@ -252,33 +252,62 @@ const AudioControl = ({ className = '' }) => {
           text-align: center;
         }
         .master-volume-container {
-          grid-column: 1 / -1;
+          width: 35%;
+          display: flex;
+          flex-direction: column;
           text-align: center;
           background: rgba(255, 153, 0, 0.1);
           border: 2px solid var(--orange);
           border-radius: 0 12px 0 0;
-          padding: 2rem;
-          margin-bottom: 1rem;
+          padding: 1.5rem;
+        }
+        .bluetooth-panel {
+          width: 65%;
+          background: rgba(0, 0, 0, 0.3);
+          border-left: 4px solid var(--orange);
+          border-radius: 0 8px 0 0;
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+        }
+        .bluetooth-content {
+          flex: 1;
+          overflow-y: auto;
+          padding-right: 0.5rem;
+        }
+        .bluetooth-content::-webkit-scrollbar {
+          width: 8px;
+        }
+        .bluetooth-content::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 4px;
+        }
+        .bluetooth-content::-webkit-scrollbar-thumb {
+          background: var(--orange);
+          border-radius: 4px;
+        }
+        .bluetooth-content::-webkit-scrollbar-thumb:hover {
+          background: var(--butterscotch);
         }
         .master-volume-title {
           color: var(--orange);
-          font-size: 1.5rem;
+          font-size: 1.2rem;
           font-weight: bold;
           margin-bottom: 1rem;
           text-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
         }
         .volume-slider-container {
           display: flex;
+          flex-direction: column;
           align-items: center;
           gap: 1rem;
-          justify-content: center;
           margin-bottom: 1rem;
         }
         .master-volume-slider {
-          width: 300px;
-          height: 40px;
+          width: 200px;
+          height: 30px;
           background: rgba(0, 0, 0, 0.5);
-          border-radius: 20px;
+          border-radius: 15px;
           outline: none;
           cursor: pointer;
           transition: all 0.3s ease;
@@ -288,8 +317,8 @@ const AudioControl = ({ className = '' }) => {
         }
         .master-volume-slider::-webkit-slider-thumb {
           appearance: none;
-          width: 40px;
-          height: 40px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           background: linear-gradient(45deg, var(--orange), var(--butterscotch));
           cursor: pointer;
@@ -301,8 +330,8 @@ const AudioControl = ({ className = '' }) => {
           box-shadow: 0 0 20px rgba(255, 153, 0, 0.8);
         }
         .master-volume-slider::-moz-range-thumb {
-          width: 40px;
-          height: 40px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           background: linear-gradient(45deg, var(--orange), var(--butterscotch));
           cursor: pointer;
@@ -312,10 +341,9 @@ const AudioControl = ({ className = '' }) => {
         .volume-display {
           color: var(--orange);
           font-family: monospace;
-          font-size: 2rem;
+          font-size: 1.5rem;
           font-weight: bold;
           text-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
-          min-width: 80px;
         }
         .bluetooth-device {
           background: rgba(0, 0, 0, 0.4);
@@ -485,42 +513,44 @@ const AudioControl = ({ className = '' }) => {
       </div>
 
       <div className="audio-container">
-        {/* Master Volume Control */}
-        {audioData && typeof audioData.masterVolume !== 'undefined' ? (
-          <div className="master-volume-container">
-            <div className="master-volume-title">MASTER VOLUME CONTROL</div>
-            
-            <div className="volume-slider-container">
-              <span style={{ color: 'var(--orange)', fontSize: '1rem', fontFamily: 'monospace', fontWeight: 'bold' }}>MIN</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={audioData.masterVolume}
-                onChange={(e) => setMasterVolume(parseInt(e.target.value))}
-                className="master-volume-slider"
-              />
-              <span style={{ color: 'var(--orange)', fontSize: '1rem', fontFamily: 'monospace', fontWeight: 'bold' }}>MAX</span>
-            </div>
-            
-            <div className="volume-display">{audioData.masterVolume}%</div>
-            
-            {/* Volume Visualizer */}
-            {renderVolumeVisualizer(audioData.masterVolume)}
-          </div>
-        ) : (
-          <div className="master-volume-container">
-            <div style={{ color: 'var(--red)', textAlign: 'center', padding: '2rem' }}>
-              MASTER VOLUME UNAVAILABLE
-              <div style={{ fontSize: '0.8rem', color: 'var(--orange)', marginTop: '0.5rem' }}>
+        {/* Master Volume Control - Left Panel */}
+        <div className="master-volume-container">
+          {audioData && typeof audioData.masterVolume !== 'undefined' ? (
+            <>
+              <div className="master-volume-title">MASTER VOLUME</div>
+              
+              <div className="volume-slider-container">
+                <span style={{ color: 'var(--orange)', fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: 'bold' }}>MIN</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={audioData.masterVolume}
+                  onChange={(e) => setMasterVolume(parseInt(e.target.value))}
+                  className="master-volume-slider"
+                />
+                <span style={{ color: 'var(--orange)', fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: 'bold' }}>MAX</span>
+              </div>
+              
+              <div className="volume-display">{audioData.masterVolume}%</div>
+              
+              {/* Volume Visualizer */}
+              {renderVolumeVisualizer(audioData.masterVolume)}
+            </>
+          ) : (
+            <>
+              <div style={{ color: 'var(--red)', textAlign: 'center' }}>
+                VOLUME UNAVAILABLE
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--orange)', marginTop: '0.5rem' }}>
                 System audio interface not accessible
               </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
 
-        {/* Bluetooth Devices */}
-        <div className="audio-panel">
+        {/* Bluetooth Devices - Right Panel */}
+        <div className="bluetooth-panel">
           <div className="panel-header">
             <h3 className="panel-title">BLUETOOTH DEVICES</h3>
             <button
@@ -531,66 +561,68 @@ const AudioControl = ({ className = '' }) => {
               {refreshingBluetooth ? 'SCANNING...' : 'REFRESH'}
             </button>
           </div>
-          {audioData && audioData.bluetoothDevices && audioData.bluetoothDevices.length > 0 ? (
-            audioData.bluetoothDevices.map((device, index) => (
-              <div 
-                key={index} 
-                className={`bluetooth-device ${device.connected ? 'connected' : 'disconnected'}`}
-                onClick={() => toggleBluetoothDevice(device.name)}
-              >
-                <div className="device-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {getDeviceIcon(device.deviceType, device.connected)}
-                    <div className={`device-name ${device.connected ? 'connected' : ''}`}>
-                      {device.name}
+          <div className="bluetooth-content">
+            {audioData && audioData.bluetoothDevices && audioData.bluetoothDevices.length > 0 ? (
+              audioData.bluetoothDevices.map((device, index) => (
+                <div 
+                  key={index} 
+                  className={`bluetooth-device ${device.connected ? 'connected' : 'disconnected'}`}
+                  onClick={() => toggleBluetoothDevice(device.name)}
+                >
+                  <div className="device-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {getDeviceIcon(device.deviceType, device.connected)}
+                      <div className={`device-name ${device.connected ? 'connected' : ''}`}>
+                        {device.name}
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleBluetoothDevice(device.name);
-                    }}
-                    className={`connection-button ${device.connected ? 'connected' : ''}`}
-                  >
-                    {device.connected ? 'DISCONNECT' : 'CONNECT'}
-                  </button>
-                </div>
-                
-                <div className="device-stats">
-                  <div className="stat-item">
-                    <div className="stat-label">TYPE</div>
-                    <div className="stat-value">{device.deviceType.toUpperCase()}</div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleBluetoothDevice(device.name);
+                      }}
+                      className={`connection-button ${device.connected ? 'connected' : ''}`}
+                    >
+                      {device.connected ? 'DISCONNECT' : 'CONNECT'}
+                    </button>
                   </div>
                   
-                  <div className="stat-item">
-                    <div className="stat-label">BATTERY</div>
-                    <div 
-                      className="stat-value" 
-                      style={{ color: getBatteryColor(device.batteryLevel) }}
-                    >
-                      {device.batteryLevel ? `${device.batteryLevel}%` : 'N/A'}
+                  <div className="device-stats">
+                    <div className="stat-item">
+                      <div className="stat-label">TYPE</div>
+                      <div className="stat-value">{device.deviceType.toUpperCase()}</div>
                     </div>
-                    {device.batteryLevel && (
-                      <div className="battery-bar">
-                        <div 
-                          className="battery-fill"
-                          style={{ 
-                            width: `${device.batteryLevel}%`,
-                            backgroundColor: getBatteryColor(device.batteryLevel)
-                          }}
-                        />
+                    
+                    <div className="stat-item">
+                      <div className="stat-label">BATTERY</div>
+                      <div 
+                        className="stat-value" 
+                        style={{ color: getBatteryColor(device.batteryLevel) }}
+                      >
+                        {device.batteryLevel ? `${device.batteryLevel}%` : 'N/A'}
                       </div>
-                    )}
+                      {device.batteryLevel && (
+                        <div className="battery-bar">
+                          <div 
+                            className="battery-fill"
+                            style={{ 
+                              width: `${device.batteryLevel}%`,
+                              backgroundColor: getBatteryColor(device.batteryLevel)
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="no-devices">
+                No Bluetooth devices found<br/>
+                <small>Ensure Bluetooth is enabled and devices are paired in Windows Settings</small>
               </div>
-            ))
-          ) : (
-            <div className="no-devices">
-              No Bluetooth devices found<br/>
-              <small>Ensure Bluetooth is enabled and devices are paired in Windows Settings</small>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

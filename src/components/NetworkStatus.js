@@ -157,7 +157,7 @@ const NetworkStatus = () => {
         </div>
         
         <div className="data-row">
-          <span className="data-label">DNS Servers:</span>
+          <span className="data-label">Router IP:</span>
           <span className="data-value">{dnsServers}</span>
         </div>
       </div>

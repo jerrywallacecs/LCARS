@@ -345,41 +345,28 @@ function App() {
     }
   };
 
-// provides dynamic network info - currently updates connection status, ip, and dns. we still need default gateway. this still needs more work but it works for now.
+// provides dynamic network info using ipify API, hope tis more reliable than electron API
+// may still fetch dns with electron API later not sure yet.
   async function getNetwork() {
 	try {
-		const networkInfo = await window.electronAPI.getNetworkInfo();
+		// Get public IP from ipify
+		const ipResponse = await fetch('https://api.ipify.org?format=json');
+		const ipData = await ipResponse.json();
+		const publicIP = ipData.ip;
 
-		// Filter out virtual IPs. Giving me problems when trying to test the error screen. Found all this on stack overflow so gave it a whirl
-		const realIPs = networkInfo.ipAddresses.filter(ip => {
-			const addr = ip.address;
-			return !addr.startsWith('127.') &&           // Loopback
-				   !addr.startsWith('169.254.') &&       // APIPA
-				   !addr.startsWith('192.168.229.') &&   // VMware virtual adapters
-				   !addr.startsWith('192.168.188.') &&   // VirtualBox/other virtual adapters
-				   !addr.startsWith('10.0.75.') &&       // Hyper-V virtual adapters
-				   !addr.startsWith('172.16.') &&        // Docker/container networks (partial range)
-				   addr !== '::1' &&                     // IPv6 loopback
-				   !addr.startsWith('fe80:');            // IPv6 link-local
-		});
-
-		const ip = realIPs.length > 0 ? realIPs.map(i => i.address) : ['No Real Network'];
-		const ipText = `IP Address: ${ip.join(', ')}`;
+		// Update IP display
+		const ipText = `IP Address: ${publicIP}`;
 		const ipDiv = document.getElementById('ip');
 		if (ipDiv) ipDiv.textContent = ipText;
 
-		const dns = networkInfo.dns.length ? networkInfo.dns.join(', ') : 'No DNS';
+		// Get dns
+		let dns = 'Google DNS: 8.8.8.8, 8.8.4.4';
 		const dnsText = `DNS: ${dns}`;
 		const dnsDiv = document.getElementById('dns');
 		if (dnsDiv) dnsDiv.textContent = dnsText;
 		
-		// Check for real network connectivity using filtered IPs
-		const hasRealIP = realIPs.length > 0 && realIPs.some(ip => 
-			ip.address !== 'No Real Network'
-		);
-		const hasRealDNS = dns !== 'DISCONNECTED' && dns !== 'No DNS';
-		
-		const isConnected = hasRealIP && hasRealDNS;
+		// Check connectivity - if we got a response from ipify, we're connected
+		const isConnected = publicIP && publicIP !== '';
 		const statusText = isConnected ? 'Status: CONNECTED' : 'Status: DISCONNECTED';
 		const statusDiv = document.getElementById('connectionStatus');
 		if (statusDiv) statusDiv.textContent = statusText;
@@ -388,7 +375,18 @@ function App() {
 		setIsConnectedToInternet(isConnected);
 		
 	} catch (err) {
-		console.error(err);
+		console.error('Network check failed:', err);
+		
+		// If ipify fails, we're likely disconnected
+		const ipDiv = document.getElementById('ip');
+		if (ipDiv) ipDiv.textContent = 'IP Address: DISCONNECTED';
+		
+		const dnsDiv = document.getElementById('dns');
+		if (dnsDiv) dnsDiv.textContent = 'DNS: DISCONNECTED';
+		
+		const statusDiv = document.getElementById('connectionStatus');
+		if (statusDiv) statusDiv.textContent = 'Status: DISCONNECTED';
+		
 		setIsConnectedToInternet(false);
 	}
   }
@@ -634,7 +632,7 @@ function App() {
            */}
       case 'audio':
         return (
-          <div style={{ overflow: 'hidden', height: '100%' }}>
+          <div style={{ height: '100%' }}>
             <AudioControl />
           </div>
         );
@@ -773,7 +771,7 @@ function App() {
         <div className="wrap">
           <div className="left-frame-top">
             <button className="panel-1-button">LCARS</button>
-            <div className="panel-2">{currentTime.getDate()}<span className="hop">-{currentTime.getFullYear()}</span></div>
+            <div className="panel-2">{currentTime.getMonth() + 1}-{currentTime.getDate()}<span className="hop">-{currentTime.getFullYear()}</span></div>
           </div>
           <div className="right-frame-top">
             <div className="banner">LCARS &#149; STARDATE {Math.floor((currentTime.getFullYear() - 2000) * 1000 + currentTime.getMonth() * 83 + currentTime.getDate() * 2.7)}.{currentTime.getHours()}</div>
