@@ -7,6 +7,7 @@ const AudioControl = ({ className = '' }) => {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [updatingVolume, setUpdatingVolume] = useState(false);
   const [refreshingBluetooth, setRefreshingBluetooth] = useState(false);
+  const [tempVolume, setTempVolume] = useState(null); // Temporary volume during dragging
 
   // Fetch audio information
   useEffect(() => {
@@ -525,14 +526,26 @@ const AudioControl = ({ className = '' }) => {
                   type="range"
                   min="0"
                   max="100"
-                  value={audioData.masterVolume}
-                  onChange={(e) => setMasterVolume(parseInt(e.target.value))}
+                  value={tempVolume !== null ? tempVolume : (audioData.masterVolume || 0)}
+                  onInput={(e) => setTempVolume(parseInt(e.target.value))} // Update display only
+                  onMouseUp={(e) => {
+                    const volume = parseInt(e.target.value);
+                    setTempVolume(null);
+                    setMasterVolume(volume); // Actually set volume when mouse released
+                  }}
+                  onKeyUp={(e) => {
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                      const volume = parseInt(e.target.value);
+                      setTempVolume(null);
+                      setMasterVolume(volume); // Handle keyboard navigation
+                    }
+                  }}
                   className="master-volume-slider"
                 />
                 <span style={{ color: 'var(--orange)', fontSize: '0.8rem', fontFamily: 'monospace', fontWeight: 'bold' }}>MAX</span>
               </div>
               
-              <div className="volume-display">{audioData.masterVolume}%</div>
+              <div className="volume-display">{tempVolume !== null ? tempVolume : audioData.masterVolume}%</div>
               
               {/* Volume Visualizer */}
               {renderVolumeVisualizer(audioData.masterVolume)}
